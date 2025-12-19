@@ -163,7 +163,7 @@ async def query_minutes(
             "answer": result['answer'],
             "meeting_date": result.get('meeting_date_formatted'),
             "sources_count": len(result['sources']),
-            "sources": result['sources']  # Include for debugging/transparency
+            "sources": result['sources']
         }
         
     except Exception as e:
