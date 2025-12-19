@@ -3,7 +3,6 @@ from datetime import datetime
 import enum
 from database import Base
 
-
 # Enums
 class UserRole(enum.Enum):
     admin = "admin"
@@ -30,7 +29,7 @@ class MeetingMinute(Base):
     summary = Column(Text)
     uploaded_by = Column(Integer, nullable=False)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
-    qdrant_collection = Column(String, nullable=False)  # Collection name in Qdrant
+    qdrant_collection = Column(String, nullable=False)  # Collection identifier in Qdrant
 
 class QueryLog(Base):
     __tablename__ = "query_logs"
