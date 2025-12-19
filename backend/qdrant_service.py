@@ -1,7 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-from sentence_transformers import SentenceTransformer
 import os
+import requests
 from typing import List, Dict
 from datetime import datetime
 
@@ -19,8 +19,9 @@ class QdrantService:
             api_key=self.qdrant_api_key,
         )
         
-        # Initialize HuggingFace embedding model
-        self.encoder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        # Use HuggingFace Inference API for embeddings
+        self.hf_api_token = os.getenv("HF_API_TOKEN", "")
+        self.embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
         self.vector_size = 384  # Dimension for all-MiniLM-L6-v2
         
         # Collection name
@@ -49,9 +50,32 @@ class QdrantService:
             raise
     
     def generate_embedding(self, text: str) -> List[float]:
-        """Generate embedding for text"""
-        embedding = self.encoder.encode(text, convert_to_tensor=False)
-        return embedding.tolist()
+        """Generate embedding using HuggingFace Inference API"""
+    
+        api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.embedding_model}"
+        
+        headers = {}
+        if self.hf_api_token:
+            headers["Authorization"] = f"Bearer {self.hf_api_token}"
+        
+        try:
+            response = requests.post(
+                api_url,
+                headers=headers,
+                json={"inputs": text, "options": {"wait_for_model": True}}
+            )
+            response.raise_for_status()
+            embedding = response.json()
+            
+            if isinstance(embedding, list) and len(embedding) > 0:
+                if isinstance(embedding[0], list):
+                    embedding = embedding[0]
+            
+            return embedding
+        except Exception as e:
+            print(f"Error generating embedding: {e}")
+            # Fallback to zero vector if API fails
+            return [0.0] * self.vector_size
     
     def store_meeting_chunks(
         self, 
@@ -69,7 +93,7 @@ class QdrantService:
             
             # Create point
             point = PointStruct(
-                id=f"{meeting_db_id}_{idx}",  # Use string ID with meeting_db_id prefix
+                id=f"{meeting_db_id}_{idx}", 
                 vector=embedding,
                 payload={
                     "text": chunk,
