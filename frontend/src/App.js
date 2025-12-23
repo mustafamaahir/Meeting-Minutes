@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Upload, LogOut, Menu, X, FileText, Calendar } from 'lucide-react';
 
 // Use environment variable for API URL with fallback
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_URL = 'https://meeting-minutes-7edd.onrender.com';
 
 function App() {
   const [user, setUser] = useState(null);
